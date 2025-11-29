@@ -64,7 +64,7 @@ async def get_pool_data():
     client = GeckoTerminalAsyncClient()
     
     # 1. Veriyi Çek
-    pool_df = await client.get_top_pools_by_network_token("sepolia-testnet", "0x03efd625304e7119b80463be5a677c121c2232bc")
+    pool_df = await client.get_top_pools_by_network_token("eth", "0xdAC17F958D2ee523a2206206994597C13D831ec7")
     
     # 2. Veri Dönüştürme (Transformation)
     # DataFrame boşsa boş liste dön
