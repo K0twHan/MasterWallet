@@ -1,25 +1,3 @@
-// Utility to get/set mock balances in localStorage
-const BALANCE_STORAGE_KEY = "mockWalletBalances";
-function getMockBalances() {
-  const stored = localStorage.getItem(BALANCE_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      return {
-        ethereum: parsed.ethereum || "0.1",
-        bitcoin: parsed.bitcoin || "",
-        solana: parsed.solana || "0.5",
-      };
-    } catch {
-      // fallback to default
-    }
-  }
-  return {
-    ethereum: "0.1",
-    bitcoin: "",
-    solana: "0.5",
-  };
-}
 import { useState, useRef, useEffect } from "react";
 import {
   Copy,
@@ -97,27 +75,6 @@ export default function Navbar({
   const walletDropdownRef = useRef<HTMLDivElement>(null);
   const tradeDropdownRef = useRef<HTMLDivElement>(null);
   const portfolioDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Track mock balance for selected chain
-  const [mockBalance, setMockBalance] = useState(() => {
-    const balances = getMockBalances();
-    return selectedChain === "solana"
-      ? balances.solana
-      : selectedChain === "ethereum"
-      ? balances.ethereum
-      : "";
-  });
-
-  useEffect(() => {
-    const balances = getMockBalances();
-    setMockBalance(
-      selectedChain === "solana"
-        ? balances.solana
-        : selectedChain === "ethereum"
-        ? balances.ethereum
-        : ""
-    );
-  }, [selectedChain]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -732,9 +689,9 @@ export default function Navbar({
                   }}
                 >
                   {selectedChain === "solana"
-                    ? `${mockBalance} SOL`
+                    ? `${balance} SOL`
                     : selectedChain === "ethereum"
-                    ? `${mockBalance} ETH`
+                    ? `${balance} ETH`
                     : ""}
                 </span>
                 <span

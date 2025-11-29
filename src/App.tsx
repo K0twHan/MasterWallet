@@ -10,7 +10,10 @@ import PoolDetail from "./components/PoolDetail";
 import AIPools from "./components/AIPools";
 import Chatbot from "./components/Chatbot";
 import SendComponent from "./components/Send";
-import { EVMWalletService } from "./services/walletService";
+import {
+  EVMWalletService,
+  SolanaWalletService,
+} from "./services/walletService";
 
 type Page =
   | "landing"
@@ -45,10 +48,10 @@ function App() {
   const [balance, setBalance] = useState<string>("0");
   const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
 
-  // Fetch real balance from Sepolia testnet
+  // Fetch real balance from blockchain
   useEffect(() => {
     const fetchBalance = async () => {
-      if (!seedPhrase || selectedChain !== "ethereum") {
+      if (!seedPhrase) {
         setBalance("0");
         return;
       }
@@ -56,20 +59,28 @@ function App() {
       try {
         setIsLoadingBalance(true);
 
-        // Use our EVMWalletService for Sepolia
-        const evmService = new EVMWalletService(seedPhrase, "sepolia");
+        if (selectedChain === "ethereum") {
+          // Use EVMWalletService for Sepolia
+          const evmService = new EVMWalletService(seedPhrase, "sepolia");
+          const balanceWei = await evmService.getBalance();
+          const balanceEth = parseFloat(balanceWei).toFixed(6);
+          setBalance(balanceEth);
+          evmService.dispose();
+        } else if (selectedChain === "solana") {
+          // Use SolanaWalletService for Solana Devnet
+          const solanaService = new SolanaWalletService(
+            seedPhrase,
+            "solana-devnet"
+          );
+          const balanceSol = await solanaService.getBalance();
+          setBalance(parseFloat(balanceSol).toFixed(6));
+          solanaService.dispose();
+        } else {
+          // Bitcoin not implemented yet
+          setBalance("0");
+        }
 
-        // Get balance
-        const balanceWei = await evmService.getBalance();
-
-        // Convert wei to ETH (1 ETH = 10^18 wei)
-        const balanceEth = (Number(balanceWei) / 1e18).toFixed(6);
-
-        setBalance(balanceEth);
         setIsLoadingBalance(false);
-
-        // Clean up
-        evmService.dispose();
       } catch (error) {
         console.error("Error fetching balance:", error);
         setBalance("0");
@@ -78,7 +89,12 @@ function App() {
     };
 
     fetchBalance();
-  }, [seedPhrase, selectedChain, walletAddresses.ethereum]);
+  }, [
+    seedPhrase,
+    selectedChain,
+    walletAddresses.ethereum,
+    walletAddresses.solana,
+  ]);
 
   const handleWalletCreated = (addresses: WalletAddresses, seed: string) => {
     setWalletAddresses(addresses);
@@ -248,7 +264,6 @@ function App() {
           walletAddresses={walletAddresses}
           selectedChain={selectedChain}
           onChainChange={setSelectedChain}
-          balance={isLoadingBalance ? "..." : balance}
           seedPhrase={seedPhrase}
           onLogout={handleLogout}
           onNavigateToSwap={() => setCurrentPage("swap")}
