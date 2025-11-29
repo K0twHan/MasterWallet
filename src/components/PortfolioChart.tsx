@@ -1,15 +1,21 @@
-import { useState } from 'react';
-import React from 'react';
+import { useState, useEffect } from 'react';
 
+// Coin Tipleri
 type CoinSymbol = 'ETH' | 'SOL' | 'USDT' | 'USDC';
 
+interface CoinData {
+  symbol: CoinSymbol;
+  name: string;
+  icon: string;
+}
+
 export default function PortfolioChart() {
-  // Coin list and mock balances
-  const coins: { symbol: CoinSymbol; name: string; icon: string }[] = [
+  // Coin Listesi ve İkonlar
+  const coins: CoinData[] = [
     {
       symbol: 'ETH',
       name: 'Ethereum',
-      icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+      icon: 'https://cryptologos.cc/logos/versions/ethereum-eth-logo-diamond-purple.svg?v=040',
     },
     {
       symbol: 'SOL',
@@ -29,6 +35,8 @@ export default function PortfolioChart() {
   ];
 
   const LS_KEY = 'portfolioBalances';
+  
+  // Varsayılan Bakiyeler (Demo Amaçlı)
   const defaultBalances: Record<CoinSymbol, number> = {
     ETH: 1.234,
     SOL: 12.45,
@@ -37,9 +45,20 @@ export default function PortfolioChart() {
   };
 
   const [balances, setBalances] = useState<Record<CoinSymbol, number>>(defaultBalances);
+  
+  // Fiyatlar
+  const [prices, setPrices] = useState<Record<CoinSymbol, number>>({
+    ETH: 0,
+    SOL: 0,
+    USDT: 1.00,
+    USDC: 1.00,
+  });
+  
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Load balances from localStorage
-  React.useEffect(() => {
+  // 1. LocalStorage'dan Bakiyeleri Yükle
+  useEffect(() => {
     const stored = localStorage.getItem(LS_KEY);
     if (stored) {
       try {
@@ -50,86 +69,179 @@ export default function PortfolioChart() {
     }
   }, []);
 
-  // Calculate total value (mock prices)
-  const prices: Record<CoinSymbol, number> = {
-    ETH: 2047.41,
-    SOL: 63.12,
-    USDT: 1.00,
-    USDC: 1.00,
-  };
-  const totalValue = coins.reduce((sum, coin) => sum + (balances[coin.symbol] || 0) * prices[coin.symbol], 0);
+  // 2. Canlı Fiyatları Çek (Fallback: CoinGecko API)
+  // WDK Pricing paketi public npm'de olmadığı için standart fetch kullanıyoruz.
+  useEffect(() => {
+    const fetchPrices = async () => {
+      setLoading(true);
+      try {
+        console.log("Fiyatlar güncelleniyor...");
+        
+        // CoinGecko basit API (API Key gerektirmez, demo için yeterlidir)
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,solana,tether,usd-coin&vs_currencies=usd'
+        );
+        
+        if (!response.ok) throw new Error('API Hatası');
+        
+        const data = await response.json();
+
+        setPrices({
+          ETH: data.ethereum.usd || 0,
+          SOL: data.solana.usd || 0,
+          USDT: data.tether.usd || 1.00,
+          USDC: data['usd-coin'].usd || 1.00,
+        });
+        setLastUpdated(new Date());
+        
+      } catch (e) {
+        console.error("Fiyat çekme hatası:", e);
+        // Hata durumunda (Rate limit vs.) eski fiyatlar kalır
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrices();
+
+    // Her 60 saniyede bir güncelle
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Toplam Portföy Değeri
+  const totalValue = coins.reduce((sum, coin) => {
+    return sum + (balances[coin.symbol] || 0) * (prices[coin.symbol] || 0);
+  }, 0);
 
   return (
     <div style={{
       background: 'rgba(20, 20, 35, 0.6)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
       borderRadius: '24px',
-      padding: '40px',
-      backdropFilter: 'blur(10px)',
+      padding: '32px',
+      backdropFilter: 'blur(12px)',
       display: 'flex',
       flexDirection: 'column',
-      minWidth: 340
+      minWidth: '340px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+      fontFamily: "'Inter', sans-serif"
     }}>
-      {/* Top Balance Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      
+      {/* Üst Kısım: Toplam Bakiye */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
-          <div style={{ fontSize: 13, color: '#999', fontWeight: 500, marginBottom: 6 }}>Est. Total Value</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', fontFamily: "'SF Mono', monospace" }}>
-            ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div style={{ fontSize: '13px', color: '#999', fontWeight: 500, marginBottom: '4px', display:'flex', alignItems:'center', gap:'6px' }}>
+            <span>Total Balance</span>
+            {lastUpdated && !loading && (
+                <span style={{width: 6, height: 6, borderRadius:'50%', background:'#28a745', display:'inline-block'}} title="Live"></span>
+            )}
+          </div>
+          <div style={{ 
+              fontSize: '36px', 
+              fontWeight: 700, 
+              color: '#fff', 
+              fontFamily: "'Space Grotesk', sans-serif",
+              letterSpacing: '-1px'
+          }}>
+            {loading && totalValue === 0 ? (
+                <span style={{opacity:0.5}}>Updating...</span>
+            ) : (
+                `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            )}
           </div>
         </div>
+        
         <button style={{
-          background: '#FFD600',
-          color: '#222',
+          background: 'linear-gradient(135deg, #FFD600 0%, #FFB800 100%)',
+          color: '#000',
           fontWeight: 700,
-          fontSize: 15,
+          fontSize: '14px',
           border: 'none',
-          borderRadius: 12,
-          padding: '10px 22px',
+          borderRadius: '12px',
+          padding: '12px 20px',
           cursor: 'pointer',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-        }}>Add Funds</button>
+          boxShadow: '0 4px 12px rgba(255, 214, 0, 0.3)',
+          transition: 'transform 0.2s'
+        }}
+        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          + Add Funds
+        </button>
       </div>
 
-      {/* Watchlist Table */}
-      <div style={{ marginTop: 12 }}>
+      {/* Coin Listesi */}
+      <div style={{ marginTop: '8px' }}>
+        
+        {/* Başlıklar */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr 1fr',
-          gap: '8px',
-          color: '#999',
-          fontSize: '13px',
+          gridTemplateColumns: '1.5fr 1fr 1fr',
+          gap: '12px',
+          color: '#666',
+          fontSize: '12px',
           fontWeight: '600',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          paddingBottom: '8px',
-          marginBottom: '2px'
+          textTransform: 'uppercase',
+          paddingBottom: '12px',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          marginBottom: '8px'
         }}>
-          <span>Coin</span>
-          <span>Price</span>
-          <span>Balance</span>
+          <span>Asset</span>
+          <span style={{textAlign:'right'}}>Price</span>
+          <span style={{textAlign:'right'}}>Value</span>
         </div>
-        {coins.map((coin) => (
-          <div key={coin.symbol} style={{
-            display: 'grid',
-            gridTemplateColumns: '1.2fr 1fr 1fr',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 0',
-            borderBottom: '1px solid rgba(255,255,255,0.04)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img src={coin.icon} alt={coin.symbol} style={{ width: 24, height: 24, borderRadius: '50%' }} />
-              <span style={{ fontWeight: 600, color: '#fff', fontSize: '15px' }}>{coin.name}</span>
-              <span style={{ color: '#999', fontSize: '13px', marginLeft: 4 }}>{coin.symbol}</span>
-            </div>
-            <div style={{ fontFamily: "'SF Mono', 'Monaco', monospace", color: '#fff', fontWeight: 600, fontSize: '15px' }}>
-              ${prices[coin.symbol].toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div style={{ fontFamily: "'SF Mono', 'Monaco', monospace", color: '#FFD600', fontWeight: 700, fontSize: '15px' }}>
-              {balances[coin.symbol]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-          </div>
-        ))}
+
+        {/* Satırlar */}
+        {coins.map((coin) => {
+            const price = prices[coin.symbol];
+            const balance = balances[coin.symbol];
+            const value = price * balance;
+
+            return (
+              <div key={coin.symbol} style={{
+                display: 'grid',
+                gridTemplateColumns: '1.5fr 1fr 1fr',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px 0',
+                borderBottom: '1px solid rgba(255,255,255,0.03)',
+                transition: 'background 0.2s',
+              }}>
+                {/* Sol: İkon + İsim */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img 
+                    src={coin.icon} 
+                    alt={coin.symbol} 
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', background:'#fff' }} 
+                  />
+                  <div style={{display:'flex', flexDirection:'column'}}>
+                    <span style={{ fontWeight: 600, color: '#fff', fontSize: '15px' }}>{coin.name}</span>
+                    <span style={{ color: '#666', fontSize: '12px' }}>{coin.symbol}</span>
+                  </div>
+                </div>
+
+                {/* Orta: Fiyat */}
+                <div style={{ textAlign: 'right', fontFamily: "'Space Grotesk', sans-serif", color: '#ccc', fontSize: '14px' }}>
+                  ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+
+                {/* Sağ: Bakiye Değeri */}
+                <div style={{ textAlign: 'right', display:'flex', flexDirection:'column' }}>
+                   <span style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#fff', fontWeight: 600, fontSize: '15px' }}>
+                      ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                   </span>
+                   <span style={{ fontSize: '12px', color: '#666' }}>
+                      {balance} {coin.symbol}
+                   </span>
+                </div>
+              </div>
+            );
+        })}
+      </div>
+      
+      <div style={{marginTop: '20px', textAlign:'center', fontSize:'11px', color:'#444'}}>
+        Live prices via CoinGecko API
       </div>
     </div>
   );

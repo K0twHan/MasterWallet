@@ -136,7 +136,7 @@ export default function Dashboard({
               margin: "0 0 16px 0",
             }}
           >
-            W Dashboard
+            Master Wallet Dashboard
           </h1>
           <div
             style={{
@@ -147,30 +147,6 @@ export default function Dashboard({
               color: "#999",
             }}
           >
-            <div
-              style={{
-                background: "rgba(255, 255, 255, 0.05)",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontFamily: "monospace",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-            </div>
-            <button
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                color: "#999",
-                padding: "8px 12px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
-            >
-              📋 Copy
-            </button>
           </div>
         </div>
 
@@ -271,7 +247,7 @@ export default function Dashboard({
                   color: "#00E676",
                 },
                 {
-                  name: "WBTC-ETH",
+                  name: "ETH-USDT",
                   protocol: "Curve",
                   apy: "18.3%",
                   staked: "$890.00",

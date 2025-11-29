@@ -116,6 +116,7 @@ export default function Pools({
   function badgeColorToRisk(color: string): RiskLevel {
     if (color === "green") return "safe";
     if (color === "orange") return "moderate";
+    if (color === "red") return "risky";
     return "risky";
   }
 

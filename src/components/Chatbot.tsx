@@ -9,8 +9,19 @@ interface Message {
   isVoice?: boolean;
 }
 
-export default function Chatbot() {
+interface ChatbotProps {
+  onGoPools?: () => void;
+}
+
+export default function Chatbot({ onGoPools }: ChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // ...existing code...
+  // Import useNavigate from react-router-dom
+  // (add at top if not present)
+  // import { useNavigate } from 'react-router-dom';
+  // ...existing code...
+  // Add navigate hook
+  // const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -22,6 +33,7 @@ export default function Chatbot() {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [showGoPools, setShowGoPools] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -52,7 +64,6 @@ export default function Chatbot() {
 
         recognition.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
-          
           const voiceMessage: Message = {
             id: Date.now().toString(),
             text: transcript,
@@ -63,17 +74,46 @@ export default function Chatbot() {
           setMessages(prev => [...prev, voiceMessage]);
           setIsRecording(false);
 
-          // Bot response
+          // Pool intent detection (simple keyword match)
+          const poolKeywords = [
+            'paramı poollarda nasıl değerlendiririm',
+            'pool',
+            'havuz',
+            'değerlendir',
+            'yatırım',
+            'değerlendirmek',
+            'değerlendiririm',
+            'poollarda',
+            'poollarda nasıl',
+            'nasıl değerlendiririm'
+          ];
+          const lowerTranscript = transcript.toLowerCase();
+          const poolIntent = poolKeywords.some(k => lowerTranscript.includes(k));
+
           setIsTyping(true);
           setTimeout(() => {
             setIsTyping(false);
-            const botMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              text: 'This feature will be active soon! 🚀',
-              sender: 'bot',
-              timestamp: new Date()
-            };
-            setMessages(prev => [...prev, botMessage]);
+            if (poolIntent) {
+              setShowGoPools(true);
+              setMessages(prev => [...prev, {
+                id: (Date.now() + 1).toString(),
+                text:
+                  'WDK platformunda paranızı değerlendirmek için AI destekli havuzlarımızı kullanabilirsiniz.\n\n' +
+                  '• AI Aggressive Trader: Yüksek risk, yüksek getiri için hızlı al-sat işlemleri.\n' +
+                  '• AI Balanced Portfolio: Dengeli risk ve getiri, portföy çeşitliliği.\n' +
+                  '• AI Conservative Growth: Düşük risk, istikrarlı büyüme ve sabit gelir.\n\n' +
+                  'Daha fazla bilgi için aşağıdaki butona tıklayın.',
+                sender: 'bot',
+                timestamp: new Date()
+              }]);
+            } else {
+              setMessages(prev => [...prev, {
+                id: (Date.now() + 1).toString(),
+                text: 'This feature will be active soon! 🚀',
+                sender: 'bot',
+                timestamp: new Date()
+              }]);
+            }
           }, 1500);
         };
 
@@ -286,7 +326,7 @@ export default function Chatbot() {
               gap: '16px'
             }}
           >
-            {messages.map((message) => (
+            {messages.map((message, idx) => (
               <div
                 key={message.id}
                 style={{
@@ -304,7 +344,8 @@ export default function Chatbot() {
                       ? 'linear-gradient(135deg, #FF6B00 0%, #FF8533 100%)'
                       : 'rgba(255, 255, 255, 0.05)',
                     border: message.sender === 'bot' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                    color: '#fff'
+                    color: '#fff',
+                    position: 'relative'
                   }}
                 >
                   {message.isVoice && (
@@ -313,7 +354,7 @@ export default function Chatbot() {
                       <div style={{ fontSize: '12px', opacity: 0.8 }}>Voice message</div>
                     </div>
                   )}
-                  <div style={{ fontSize: '14px', lineHeight: '1.5' }}>
+                  <div style={{ fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
                     {message.text}
                   </div>
                   <div
@@ -326,6 +367,39 @@ export default function Chatbot() {
                   >
                     {formatTime(message.timestamp)}
                   </div>
+                  {/* Go Pools Button for pool intent message */}
+                  {showGoPools && idx === messages.length - 1 && message.sender === 'bot' && message.text.includes('AI Aggressive Trader') && (
+                    <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                      <button
+                        style={{
+                          background: 'linear-gradient(135deg, #FF6B00 0%, #FF8533 100%)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '10px 24px',
+                          fontWeight: '700',
+                          fontSize: '15px',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 16px rgba(255, 107, 0, 0.2)',
+                          marginTop: '8px',
+                          transition: 'all 0.2s'
+                        }}
+                        onClick={() => {
+                          if (onGoPools) {
+                            onGoPools();
+                          }
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        Go Pools
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

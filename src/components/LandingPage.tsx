@@ -36,7 +36,6 @@ export default function LandingPage({ onNavigateToWallet }: LandingPageProps) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Logo Alanı */}
-          <img src={WDK_LOGO_URL} alt="WDK Logo" style={{ height: '40px', width: 'auto' }} />
           <span style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px' }}>
             Master<span style={{color: '#FF6B00'}}>Wallet</span>
           </span>
@@ -86,7 +85,10 @@ export default function LandingPage({ onNavigateToWallet }: LandingPageProps) {
         
         <p style={styles.heroSubtitle}>
           The smartest way to earn yield. <br/>
-          <b>Simple</b> for everyone. <b>Autonomous AI Agents</b> for pros.
+          <b>Simple</b> for everyone. <b>Autonomous AI Agents</b> for pros.<br/>
+          <span style={{ color: '#FF6B00', fontWeight: 600 }}>
+            Swap, Bridge, and use our Voice Chatbot for easy DeFi.
+          </span>
         </p>
 
         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '48px' }}>
@@ -127,7 +129,23 @@ export default function LandingPage({ onNavigateToWallet }: LandingPageProps) {
               desc="No complex DeFi jargon. Just deposit USDT and click 'Earn'. We scan the safest pools (Aave, Curve) and handle the rest."
             />
 
-            {/* Kart 2: AI Agents */}
+            {/* Kart 2: Swap & Bridge */}
+            <FeatureCard 
+              icon="🔄"
+              title="Swap & Bridge"
+              highlight="Multi-Chain"
+              desc="Swap tokens instantly and bridge assets between chains with a single click. Powered by Tether WDK for fast, low-fee transactions."
+            />
+
+            {/* Kart 3: Voice Chatbot */}
+            <FeatureCard 
+              icon="🎤"
+              title="Voice Chatbot"
+              highlight="AI Assistant"
+              desc="Ask questions, get pool suggestions, and manage your wallet using voice commands. Your personal DeFi assistant is always online."
+            />
+
+            {/* Kart 4: AI Agents */}
             <FeatureCard 
               icon="🤖"
               title="AI Agent Automation"
@@ -135,7 +153,7 @@ export default function LandingPage({ onNavigateToWallet }: LandingPageProps) {
               desc="Set your risk tolerance and let our AI Agents hunt for the best APY across chains. Auto-rebalance, auto-compound, 24/7."
             />
 
-            {/* Kart 3: Security */}
+            {/* Kart 5: Security */}
             <FeatureCard 
               icon="🛡️"
               title="Non-Custodial Security"
@@ -199,9 +217,7 @@ export default function LandingPage({ onNavigateToWallet }: LandingPageProps) {
         background: '#050505',
         color: '#666'
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-          <img src={WDK_LOGO_URL} alt="WDK Logo" style={{ height: '36px', width: 'auto', marginBottom: '8px', filter: 'drop-shadow(0 0 8px #FF6B00)' }} />
-          <span style={{ fontSize: '16px', fontWeight: '700', color: '#FF6B00', letterSpacing: '0.5px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>          <span style={{ fontSize: '16px', fontWeight: '700', color: '#FF6B00', letterSpacing: '0.5px' }}>
             Powered by Tether WDK
           </span>
         </div>

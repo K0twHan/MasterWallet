@@ -66,7 +66,7 @@ export default function Swap({
   } | null>(null);
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   const [quoteError, setQuoteError] = useState<string>("");
-  const [network, setNetwork] = useState<NetworkType>("solana-devnet"); // Default to Solana Devnet for testnet with liquidity
+  const [network, setNetwork] = useState<NetworkType>("sepolia"); // Default to Sepolia testnet
   const [demoMode, setDemoMode] = useState<boolean>(false); // Demo mode for hackathon testing
 
   // Network configurations
@@ -293,7 +293,7 @@ export default function Swap({
         console.error("Error getting quote:", error);
 
         // Parse error and provide helpful message
-        let errorMessage = "Fiyat teklifi alınamadı";
+        let errorMessage = "Could not fetch quote";
 
         if (
           error.message?.includes("liquidity") ||
@@ -302,16 +302,16 @@ export default function Swap({
         ) {
           errorMessage =
             network === "sepolia"
-              ? "⚠️ Sepolia testnet'te bu token çifti için likidite yok. Mainnet'e geçin veya farklı tokenlar deneyin."
-              : "⚠️ Bu token çifti için yeterli likidite bulunamadı. Daha küçük miktarlar veya farklı tokenlar deneyin.";
+              ? "⚠️ No liquidity for this token pair on Sepolia testnet. Switch to Mainnet or try different tokens."
+              : "⚠️ Not enough liquidity for this token pair. Try smaller amounts or different tokens.";
         } else if (
           error.message?.includes("rate") ||
           error.message?.includes("price")
         ) {
-          errorMessage = "⚠️ Fiyat bilgisi alınamadı. Lütfen tekrar deneyin.";
+          errorMessage = "⚠️ Could not fetch price information. Please try again.";
         } else if (network === "sepolia") {
           errorMessage =
-            "⚠️ Sepolia testnet'te DEX likiditesi çok sınırlı. Gerçek swap için mainnet kullanın.";
+            "⚠️ DEX liquidity is very limited on Sepolia testnet. Use Mainnet for real swaps.";
         }
 
         setQuoteError(errorMessage);
@@ -358,22 +358,20 @@ export default function Swap({
     }
 
     if (!swapQuote) {
-      alert("⚠️ Fiyat teklifi yükleniyor, lütfen bekleyin");
+      alert("⚠️ Quote is loading, please wait");
       return;
     }
 
     // Demo Mode - Simulated swap (no real transaction)
     if (demoMode) {
       const confirmDemo = confirm(
-        "🎮 DEMO MODU - SİMÜLASYON\n\n" +
-          "Bu bir simülasyondur. Gerçek blockchain işlemi YAPILMAYACAK!\n\n" +
-          `📤 Satılacak: ${fromAmount} ${fromToken}\n` +
-          `📥 Alınacak: ${toAmount} ${toToken}\n` +
-          `💰 Simüle Ücret: ${(Number(swapQuote.fee) / 1e18).toFixed(
-            6
-          )} ETH\n\n` +
-          "Hackathon demosu için idealdir.\n\n" +
-          "Devam etmek istiyor musunuz?"
+        "🎮 DEMO MODE - SIMULATION\n\n" +
+          "This is a simulation. No real blockchain transaction will be made!\n\n" +
+          `📤 Selling: ${fromAmount} ${fromToken}\n` +
+          `📥 Receiving: ${toAmount} ${toToken}\n` +
+          `💰 Simulated Fee: ${(Number(swapQuote.fee) / 1e18).toFixed(6)} ETH\n\n` +
+          "Ideal for hackathon demos.\n\n" +
+          "Do you want to continue?"
       );
 
       if (!confirmDemo) return;
@@ -392,19 +390,17 @@ export default function Swap({
           ).join("");
 
         alert(
-          `✅ DEMO SWAP BAŞARILI!\n\n` +
-            `🎮 Bu bir simülasyondur - gerçek işlem yapılmadı\n\n` +
+          `✅ DEMO SWAP SUCCESSFUL!\n\n` +
+            `🎮 This is a simulation - no real transaction was made\n\n` +
             `Demo Transaction Hash:\n${fakeHash}\n\n` +
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `📤 Satılan: ${fromAmount} ${fromToken}\n` +
-            `📥 Alınan: ${toAmount} ${toToken}\n` +
-            `💰 Simüle Ağ Ücreti: ${(Number(swapQuote.fee) / 1e18).toFixed(
-              6
-            )} ETH\n\n` +
-            `📋 Hackathon notları:\n` +
-            `• Gerçek swap için Demo Modu'nu kapatın\n` +
-            `• Mainnet'te gerçek WETH gerekir\n` +
-            `• Testnet'te likidite çok sınırlı`
+            `📤 Sold: ${fromAmount} ${fromToken}\n` +
+            `📥 Received: ${toAmount} ${toToken}\n` +
+            `💰 Simulated Network Fee: ${(Number(swapQuote.fee) / 1e18).toFixed(6)} ETH\n\n` +
+            `📋 Hackathon notes:\n` +
+            `• Turn off Demo Mode for real swap\n` +
+            `• Real WETH required on Mainnet\n` +
+            `• Liquidity is very limited on testnet`
         );
 
         // Reset form
@@ -427,20 +423,20 @@ export default function Swap({
       const hasLiquidity = network === "solana-devnet"; // Solana Devnet has liquidity via Jupiter
 
       const confirmTestnet = confirm(
-        `🧪 TESTNET MODU\n\n` +
-          `${networkName} kullanıyorsunuz.\n` +
-          `Bu tokenlar gerçek değildir ve test amaçlıdır.\n\n` +
+        `🧪 TESTNET MODE\n\n` +
+          `You are using ${networkName}.\n` +
+          `These tokens are not real and are for testing purposes only.\n\n` +
           (hasLiquidity
-            ? `✅ Solana Devnet'te Jupiter üzerinden likidite VAR!\n` +
-              `Bu ağda gerçek swap yapabilirsiniz.\n\n`
-            : `⚠️ UYARI: Bu ağda DEX likiditesi olmayabilir!\n\n`) +
-          `💡 İPUCU:\n` +
+            ? `✅ Liquidity is AVAILABLE on Solana Devnet via Jupiter!\n` +
+              `You can perform real swaps on this network.\n\n`
+            : `⚠️ WARNING: DEX liquidity may not be available on this network!\n\n`) +
+          `💡 TIP:\n` +
           (hasLiquidity
             ? `• SOL faucet: https://faucet.solana.com\n` +
-              `• Jupiter DEX aggregator kullanılıyor\n`
-            : `• Mainnet'e geçmeniz önerilir (⚙️)\n` +
-              `• Swap başarısız olabilir (likidite yok)\n`) +
-          `\nDevam etmek istiyor musunuz?`
+              `• Jupiter DEX aggregator is used\n`
+            : `• It is recommended to switch to Mainnet (⚙️)\n` +
+              `• Swap may fail (no liquidity)\n`) +
+          `\nDo you want to continue?`
       );
       if (!confirmTestnet) return;
     }
@@ -510,16 +506,16 @@ export default function Swap({
         const explorerUrl = `https://explorer.solana.com/tx/${result.hash}?cluster=devnet`;
 
         alert(
-          `✅ SOLANA SWAP BAŞARILI!\n\n` +
-            `🪐 Gerçek transaction Solana Devnet'e gönderildi!\n\n` +
+          `✅ SOLANA SWAP SUCCESSFUL!\n\n` +
+            `🪐 Real transaction sent to Solana Devnet!\n\n` +
             `Transaction Signature:\n${result.hash}\n\n` +
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `📤 Gönderilen: ${fromAmount} ${fromToken}\n` +
-            `📥 Simüle Alınan: ${outputAmount.toFixed(2)} ${toToken}\n` +
-            `💰 Ağ Ücreti: ${(Number(result.fee) / 1e9).toFixed(6)} SOL\n\n` +
-            `� Explorer'da Görüntüle:\n${explorerUrl}\n\n` +
-            `📋 Not: Bu gerçek bir Solana Devnet işlemidir!\n` +
-            `DEX swap için mainnet + Jupiter gerekir.`
+            `📤 Sent: ${fromAmount} ${fromToken}\n` +
+            `📥 Simulated Received: ${outputAmount.toFixed(2)} ${toToken}\n` +
+            `💰 Network Fee: ${(Number(result.fee) / 1e9).toFixed(6)} SOL\n\n` +
+            `🔗 View on Explorer:\n${explorerUrl}\n\n` +
+            `📋 Note: This is a real Solana Devnet transaction!\n` +
+            `DEX swap requires mainnet + Jupiter.`
         );
 
         // Open explorer in new tab
@@ -579,17 +575,17 @@ export default function Swap({
       const outputDecimals = tokenDecimals[toToken] || 18;
 
       alert(
-        `✅ Swap Başarılı!\n\n` +
+        `✅ Swap Successful!\n\n` +
           `Transaction Hash:\n${result.hash}\n\n` +
           `━━━━━━━━━━━━━━━━━━━━━━\n` +
-          `📤 Satılan: ${(
+          `📤 Sold: ${(
             Number(result.tokenInAmount) / Math.pow(10, inputDecimals)
           ).toFixed(inputDecimals === 6 ? 2 : 6)} ${fromToken}\n` +
-          `📥 Alınan: ${(
+          `📥 Received: ${(
             Number(result.tokenOutAmount) / Math.pow(10, outputDecimals)
           ).toFixed(outputDecimals === 6 ? 2 : 6)} ${toToken}\n` +
-          `💰 Ağ Ücreti: ${(Number(result.fee) / 1e18).toFixed(6)} ETH\n\n` +
-          `Bakiyeniz kısa süre içinde güncellenecek.`
+          `💰 Network Fee: ${(Number(result.fee) / 1e18).toFixed(6)} ETH\n\n` +
+          `Your balance will update shortly.`
       );
 
       // Reset form
@@ -614,40 +610,40 @@ export default function Swap({
         network: network,
       });
 
-      let errorMessage = "❌ Swap İşlemi Başarısız\n\n";
+      let errorMessage = "❌ Swap Failed\n\n";
 
       if (
         error.message?.includes("estimateGas") ||
         error.message?.includes("missing revert data")
       ) {
-        errorMessage += "⚠️ İşlem simülasyonu başarısız oldu.\n\n";
+        errorMessage += "⚠️ Transaction simulation failed.\n\n";
         if (network === "sepolia") {
-          errorMessage += "🧪 TESTNET SORUNU:\n";
-          errorMessage += "Velora DEX Sepolia testnet'te çalışmıyor!\n\n";
-          errorMessage += "✅ ÇÖZÜM:\n";
-          errorMessage += "➡️ Ayarlar (⚙️) > Ethereum Mainnet'e geçin\n";
-          errorMessage += "➡️ Gerçek ETH ile swap yapabilirsiniz\n\n";
-          errorMessage += "💡 Testnet sadece cüzdan test etmek için uygun.";
+          errorMessage += "🧪 TESTNET ISSUE:\n";
+          errorMessage += "Velora DEX does not work on Sepolia testnet!\n\n";
+          errorMessage += "✅ SOLUTION:\n";
+          errorMessage += "➡️ Settings (⚙️) > Switch to Ethereum Mainnet\n";
+          errorMessage += "➡️ You can swap with real ETH\n\n";
+          errorMessage += "💡 Testnet is only suitable for wallet testing.";
         } else {
-          errorMessage += "🔴 MAINNET SORUNU:\n\n";
+          errorMessage += "🔴 MAINNET ISSUE:\n\n";
           if (fromToken === "WETH") {
-            errorMessage += "❌ WETH tokenınız yok veya yetersiz!\n\n";
-            errorMessage += "💡 ÇÖZÜMLER:\n";
-            errorMessage += "1️⃣ ETH'inizi WETH'e dönüştürün:\n";
-            errorMessage += "   • https://app.uniswap.org adresine gidin\n";
-            errorMessage += '   • "Wrap ETH" seçeneğini kullanın\n';
-            errorMessage += "   • Veya bu cüzdan adresine WETH gönderin\n\n";
-            errorMessage += "2️⃣ Yetersiz bakiye:\n";
-            errorMessage += "   • Cüzdanda: " + balance + " ETH\n";
-            errorMessage += "   • Swap için: " + fromAmount + " WETH gerekli\n";
+            errorMessage += "❌ You do not have WETH or your balance is insufficient!\n\n";
+            errorMessage += "💡 SOLUTIONS:\n";
+            errorMessage += "1️⃣ Convert your ETH to WETH:\n";
+            errorMessage += "   • Go to https://app.uniswap.org\n";
+            errorMessage += '   • Use the "Wrap ETH" option\n';
+            errorMessage += "   • Or send WETH to this wallet address\n\n";
+            errorMessage += "2️⃣ Insufficient balance:\n";
+            errorMessage += "   • In wallet: " + balance + " ETH\n";
+            errorMessage += "   • For swap: " + fromAmount + " WETH required\n";
             errorMessage += "   • WETH = Wrapped ETH (ERC-20 token)\n\n";
-            errorMessage += "3️⃣ Token onayı (approval) gerekli olabilir";
+            errorMessage += "3️⃣ Token approval may be required";
           } else {
-            errorMessage += "Olası nedenler:\n";
-            errorMessage += "• Yetersiz " + fromToken + " bakiyesi\n";
-            errorMessage += "• Token onayı (approval) gerekli\n";
-            errorMessage += "• Likidite yok\n";
-            errorMessage += "• Gas ücreti çok yüksek";
+            errorMessage += "Possible reasons:\n";
+            errorMessage += "• Insufficient " + fromToken + " balance\n";
+            errorMessage += "• Token approval required\n";
+            errorMessage += "• No liquidity\n";
+            errorMessage += "• Gas fee is too high";
           }
         }
       } else if (
@@ -655,42 +651,42 @@ export default function Swap({
         error.message?.includes("route") ||
         error.message?.includes("no route")
       ) {
-        errorMessage += "🚫 Bu token çifti için likidite bulunamadı.\n\n";
+        errorMessage += "🚫 No liquidity found for this token pair.\n\n";
         if (network === "sepolia") {
-          errorMessage += "🧪 TESTNET LİMİTASYONU:\n";
-          errorMessage += "Velora DEX Sepolia'da sınırlı likiditeye sahip.\n\n";
-          errorMessage += "💡 ÇÖZÜMLER:\n";
+          errorMessage += "🧪 TESTNET LIMITATION:\n";
+          errorMessage += "Velora DEX has limited liquidity on Sepolia.\n\n";
+          errorMessage += "💡 SOLUTIONS:\n";
           errorMessage +=
-            "1️⃣ Test tokenlarınızı Pimlico/Candide faucet'ten edinin\n";
-          errorMessage += "2️⃣ Farklı token çifti deneyin (örn: WETH → USDT)\n";
-          errorMessage += "3️⃣ Gerçek swaplar için Mainnet'e geçin (Ayarlar ⚙️)";
+            "1️⃣ Get test tokens from Pimlico/Candide faucet\n";
+          errorMessage += "2️⃣ Try a different token pair (e.g. WETH → USDT)\n";
+          errorMessage += "3️⃣ Switch to Mainnet for real swaps (Settings ⚙️)";
         } else {
           errorMessage +=
-            "💡 Bu token çifti mainnet'te yeterli likiditeye sahip olmayabilir.\n";
-          errorMessage += "   Farklı bir token çifti deneyin.";
+            "💡 This token pair may not have enough liquidity on mainnet.\n";
+          errorMessage += "   Try a different token pair.";
         }
       } else if (
         error.message?.includes("max fee") ||
         error.message?.includes("fee")
       ) {
         errorMessage +=
-          "💸 Swap ücreti maksimum izin verilen ücretin üzerinde.\n\n";
+          "💸 Swap fee is above the maximum allowed.\n\n";
         errorMessage +=
-          "💡 İşlem maliyetleri çok yüksek. Daha sonra tekrar deneyin.";
+          "💡 Transaction costs are too high. Try again later.";
       } else if (
         error.message?.includes("insufficient") ||
         error.message?.includes("balance")
       ) {
-        errorMessage += "💰 İşlemi tamamlamak için yetersiz bakiye.\n\n";
+        errorMessage += "💰 Insufficient balance to complete the transaction.\n\n";
         errorMessage +=
-          "💡 Daha düşük bir miktar girin veya cüzdanınıza fon ekleyin.";
+          "💡 Enter a lower amount or fund your wallet.";
       } else if (
         error.message?.includes("user rejected") ||
         error.message?.includes("denied")
       ) {
-        errorMessage += "🚫 İşlem kullanıcı tarafından reddedildi.";
+        errorMessage += "🚫 Transaction was rejected by the user.";
       } else {
-        errorMessage += "⚠️ Hata detayları:\n" + error.message;
+        errorMessage += "⚠️ Error details:\n" + error.message;
       }
 
       alert(errorMessage);
@@ -1082,7 +1078,11 @@ export default function Swap({
                     outline: "none",
                     marginBottom: "12px",
                     fontFamily: "'Space Grotesk', sans-serif",
+                    MozAppearance: "textfield",
+                    appearance: "none",
                   }}
+                  // Remove spinner arrows in Chrome, Safari, Edge
+                  onWheel={e => (e.target as HTMLInputElement).blur()}
                 />
                 <div
                   style={{
@@ -1163,7 +1163,7 @@ export default function Swap({
                   padding: "0 4px",
                 }}
               >
-                <span>Balance: {balance} ETH</span>
+                <span>Balance: {balance} {fromToken}</span>
                 <span
                   style={{
                     color: "#FF6B00",
@@ -1250,7 +1250,11 @@ export default function Swap({
                     outline: "none",
                     marginBottom: "12px",
                     fontFamily: "'Space Grotesk', sans-serif",
+                    MozAppearance: "textfield",
+                    appearance: "none",
                   }}
+                  // Remove spinner arrows in Chrome, Safari, Edge
+                  onWheel={e => (e.target as HTMLInputElement).blur()}
                 />
                 {isLoadingQuote && (
                   <div
@@ -1344,7 +1348,7 @@ export default function Swap({
                   padding: "0 4px",
                 }}
               >
-                Balance: 0.00 USDT
+                Balance: {balance} {toToken}
               </div>
             </div>
 
@@ -1375,7 +1379,7 @@ export default function Swap({
                       fontWeight: "600",
                     }}
                   >
-                    Swap Detayları
+                    Swap Details
                   </div>
                 </div>
                 <div
@@ -1384,7 +1388,7 @@ export default function Swap({
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
                   >
-                    <span>Oran (Rate):</span>
+                    <span>Rate:</span>
                     <span>
                       1 {fromToken} ≈{" "}
                       {(
@@ -1399,13 +1403,13 @@ export default function Swap({
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
                   >
-                    <span>Ağ Ücreti:</span>
+                    <span>Network Fee:</span>
                     <span>{(Number(swapQuote.fee) / 1e18).toFixed(6)} ETH</span>
                   </div>
                   <div
                     style={{ display: "flex", justifyContent: "space-between" }}
                   >
-                    <span>Kayma (Slippage):</span>
+                    <span>Slippage:</span>
                     <span>{slippage}%</span>
                   </div>
                 </div>
@@ -1441,8 +1445,7 @@ export default function Swap({
                       margin: "8px 0 0 0",
                     }}
                   >
-                    💡 İpucu: Swap için Mainnet kullanmanız önerilir. Testnet
-                    DEX'lerinde likidite çok sınırlıdır.
+                    💡 Tip: It is recommended to use Mainnet for swaps. Liquidity is very limited on Testnet DEXes.
                   </p>
                 )}
               </div>

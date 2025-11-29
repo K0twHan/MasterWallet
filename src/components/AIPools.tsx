@@ -72,69 +72,72 @@ export default function AIPools({
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showFeeModal, setShowFeeModal] = useState(false);
+  const [feeInfo, setFeeInfo] = useState<{amount: number; fee: string; platformFee: string} | null>(null);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
 
   const strategies: AIStrategy[] = [
-    {
-      id: "1",
-      name: "AI Aggressive Trader",
-      description:
-        "High-frequency trading strategy. AI takes aggressive positions to maximize profit from market volatility.",
-      riskLevel: "aggressive",
-      targetAPY: "85-250%",
-      minDeposit: "$1,000",
-      currentTVL: "$5.2M",
-      performance30d: "+47.3%",
-      winRate: "68%",
-      activeTrades: 47,
-      features: [
-        "High-frequency trading",
-        "Leverage usage (3x-5x)",
-        "Volatility arbitrage",
-        "Stop-loss protection",
-        "24/7 automated trading",
-      ],
-    },
-    {
-      id: "2",
-      name: "AI Balanced Portfolio",
-      description:
-        "Balanced risk and return strategy. AI targets optimized returns with investments distributed across different pools.",
-      riskLevel: "balanced",
-      targetAPY: "35-85%",
-      minDeposit: "$500",
-      currentTVL: "$12.8M",
-      performance30d: "+22.7%",
-      winRate: "74%",
-      activeTrades: 28,
-      features: [
-        "Diversified portfolio",
-        "Medium risk, medium return",
-        "Automatic rebalancing",
-        "DeFi blue-chip focused",
-        "Risk management algorithms",
-      ],
-    },
-    {
-      id: "3",
-      name: "AI Conservative Growth",
-      description:
-        "Low-risk, stable returns strategy. AI invests in safe pools and stablecoins.",
-      riskLevel: "conservative",
-      targetAPY: "15-35%",
-      minDeposit: "$250",
-      currentTVL: "$24.6M",
-      performance30d: "+8.4%",
-      winRate: "82%",
-      activeTrades: 15,
-      features: [
-        "Stablecoin weighted",
-        "Low volatility",
-        "Safe DeFi protocols",
-        "Minimal impermanent loss",
-        "Steady income focused",
-      ],
-    },
-  ];
+      {
+        id: "1",
+        name: "AI Aggressive Trader",
+        description:
+          "High-frequency trading strategy. AI takes aggressive positions to maximize profit from market volatility.",
+        riskLevel: "aggressive",
+        targetAPY: "85-250%",
+        minDeposit: "$100",
+        currentTVL: "$5.2M",
+        performance30d: "+47.3%",
+        winRate: "68%",
+        activeTrades: 47,
+        features: [
+          "High-frequency trading",
+          "Leverage usage (3x-5x)",
+          "Volatility arbitrage",
+          "Stop-loss protection",
+          "24/7 automated trading",
+        ],
+      },
+      {
+        id: "2",
+        name: "AI Balanced Portfolio",
+        description:
+          "Balanced risk and return strategy. AI targets optimized returns with investments distributed across different pools.",
+        riskLevel: "balanced",
+        targetAPY: "35-85%",
+        minDeposit: "$100",
+        currentTVL: "$12.8M",
+        performance30d: "+22.7%",
+        winRate: "74%",
+        activeTrades: 28,
+        features: [
+          "Diversified portfolio",
+          "Medium risk, medium return",
+          "Automatic rebalancing",
+          "DeFi blue-chip focused",
+          "Risk management algorithms",
+        ],
+      },
+      {
+        id: "3",
+        name: "AI Conservative Growth",
+        description:
+          "Low-risk, stable returns strategy. AI invests in safe pools and stablecoins.",
+        riskLevel: "conservative",
+        targetAPY: "15-35%",
+        minDeposit: "$100",
+        currentTVL: "$24.6M",
+        performance30d: "+8.4%",
+        winRate: "82%",
+        activeTrades: 15,
+        features: [
+          "Stablecoin weighted",
+          "Low volatility",
+          "Safe DeFi protocols",
+          "Minimal impermanent loss",
+          "Steady income focused",
+        ],
+      },
+    ];
 
   const riskColors = {
     aggressive: {
@@ -167,27 +170,26 @@ export default function AIPools({
 
   const confirmDeposit = () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
-      alert("Please enter a valid amount");
+      setModalMessage("Please enter a valid amount");
       return;
     }
 
     const strategy = strategies.find((s) => s.id === selectedStrategy);
     if (!strategy) return;
 
-    const minDeposit = parseFloat(strategy.minDeposit.replace(/[$,]/g, ""));
+    const minDeposit = 100;
     const amount = parseFloat(depositAmount);
 
     if (amount < minDeposit) {
-      alert(`Minimum deposit amount is ${strategy.minDeposit}`);
+      setModalMessage("Minimum deposit amount is $100");
       return;
     }
 
-    alert(
-      `✅ Success!\n\n$${depositAmount} deposited to ${strategy.name}.\n\nAI will automatically invest in the best pools.`
-    );
-    setShowDepositModal(false);
-    setDepositAmount("");
-    setSelectedStrategy(null);
+    // Show fee and platform fee in a custom modal
+    const fee = (amount * 0.01).toFixed(2); // 1% fee
+    const platformFee = (amount * 0.005).toFixed(2); // 0.5% platform fee
+    setFeeInfo({ amount, fee, platformFee });
+    setShowFeeModal(true);
   };
 
   return (
@@ -983,6 +985,147 @@ export default function AIPools({
                 </>
               );
             })()}
+          </div>
+        </div>
+      )}
+      {/* Fee Confirmation Modal */}
+      {showFeeModal && feeInfo && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+          }}
+          onClick={() => setShowFeeModal(false)}
+        >
+          <div
+            style={{
+              background: "linear-gradient(135deg, #1a1a2e 0%, #23234a 100%)",
+              border: "2px solid #FF6B00",
+              borderRadius: "24px",
+              padding: "40px 32px",
+              maxWidth: "400px",
+              width: "100%",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ color: "#FF6B00", fontWeight: "700", fontSize: "22px", marginBottom: "18px" }}>
+              Deposit Confirmation
+            </h2>
+            <div style={{ color: "#fff", fontSize: "17px", marginBottom: "18px" }}>
+              Deposit Amount: <strong>${feeInfo.amount}</strong>
+              <br />
+              Fee (1%): <strong>${feeInfo.fee}</strong>
+              <br />
+              Platform Fee (0.5%): <strong>${feeInfo.platformFee}</strong>
+            </div>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+              <button
+                style={{
+                  background: "#23234a",
+                  color: "#FF6B00",
+                  border: "1px solid #FF6B00",
+                  borderRadius: "8px",
+                  padding: "10px 24px",
+                  fontWeight: "700",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  setShowFeeModal(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                style={{
+                  background: "#FF6B00",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 24px",
+                  fontWeight: "700",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  setShowFeeModal(false);
+                  setModalMessage(`✅ Success!\n\n$${depositAmount} deposited.\nAI will automatically invest in the best pools.`);
+                  setShowDepositModal(false);
+                  setDepositAmount("");
+                  setSelectedStrategy(null);
+                }}
+              >
+                Confirm Deposit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Centered Modal Message */}
+      {modalMessage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3000,
+          }}
+          onClick={() => setModalMessage(null)}
+        >
+          <div
+            style={{
+              background: "linear-gradient(135deg, #23234a 0%, #1a1a2e 100%)",
+              border: "2px solid #FF6B00",
+              borderRadius: "24px",
+              padding: "40px 32px",
+              maxWidth: "400px",
+              width: "100%",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+              textAlign: "center",
+              color: "#fff",
+              fontSize: "18px",
+              fontWeight: "600",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {modalMessage.split("\n").map((line, idx) => (
+              <div key={idx}>{line}</div>
+            ))}
+            <div style={{ marginTop: "18px" }}>
+              <button
+                style={{
+                  background: "#FF6B00",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 24px",
+                  fontWeight: "700",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setModalMessage(null)}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}

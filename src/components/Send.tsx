@@ -33,7 +33,6 @@ interface SendProps {
   walletAddresses: WalletAddresses;
   selectedChain: Chain;
   onChainChange: (chain: Chain) => void;
-  balance: string;
   seedPhrase: string;
   onLogout: () => void;
   onNavigateToSwap: () => void;
@@ -58,7 +57,6 @@ export default function SendComponent({
   walletAddresses,
   selectedChain,
   onChainChange,
-  balance,
   seedPhrase,
   onLogout,
   onNavigateToSwap,
@@ -83,7 +81,7 @@ export default function SendComponent({
   } | null>(null);
   const [error, setError] = useState<string>("");
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [currentBalance, setCurrentBalance] = useState<string>(balance);
+  const [currentBalance, setCurrentBalance] = useState<string>("0");
 
   const isEVMNetwork = network === "sepolia" || network === "ethereum";
   const isSolanaNetwork = network.startsWith("solana");
@@ -217,9 +215,11 @@ export default function SendComponent({
     // Check if user has enough balance
     const amountFloat = parseFloat(amount);
     const balanceFloat = parseFloat(currentBalance);
-    
+
     if (tokenType === "native" && amountFloat > balanceFloat) {
-      setError(`Insufficient balance. You have ${balanceFloat} ${nativeSymbol}`);
+      setError(
+        `Insufficient balance. You have ${balanceFloat} ${nativeSymbol}`
+      );
       return;
     }
 
@@ -268,7 +268,7 @@ export default function SendComponent({
 
         if (result) {
           setTxResult({ hash: result.hash, fee: result.fee });
-          
+
           // Refresh balance after successful transaction
           setTimeout(async () => {
             const bal = await evmService.getBalance();
@@ -300,7 +300,7 @@ export default function SendComponent({
 
         if (result) {
           setTxResult({ hash: result.hash, fee: result.fee });
-          
+
           // Refresh balance after successful transaction
           setTimeout(async () => {
             const bal = await solanaService.getBalance();
@@ -317,20 +317,21 @@ export default function SendComponent({
       setQuote(null);
     } catch (err: any) {
       console.error("Send failed:", err);
-      
+
       // Better error messages
       let errorMessage = "Transaction failed. Please try again.";
-      
+
       if (err.message?.includes("insufficient funds")) {
         errorMessage = `Insufficient funds. You need more ${nativeSymbol} for gas fees.`;
       } else if (err.message?.includes("exceeds balance")) {
         errorMessage = `Amount exceeds your balance of ${currentBalance} ${nativeSymbol}`;
       } else if (err.message?.includes("gas")) {
-        errorMessage = "Gas estimation failed. Check your balance and try again.";
+        errorMessage =
+          "Gas estimation failed. Check your balance and try again.";
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       setIsSending(false);
     }

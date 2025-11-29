@@ -95,6 +95,9 @@ export default function PoolDetail({
   const [token1Amount, setToken1Amount] = useState('');
   const [token2Amount, setToken2Amount] = useState('');
   const [withdrawPercentage, setWithdrawPercentage] = useState(0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [createdPools, setCreatedPools] = useState<Array<{ token1: string; token2: string; amount1: string; amount2: string; fee: number; platformFee: number }>>([]);
+  const [pendingDeposit, setPendingDeposit] = useState<null | { token1: string; token2: string; amount1: string; amount2: string; fee: number; platformFee: number }>(null);
 
   // Mock pool data - in real app, fetch based on poolId
   const poolsData: Record<string, PoolData> = {
@@ -141,18 +144,39 @@ export default function PoolDetail({
       alert('Please enter amount for both tokens');
       return;
     }
-    alert(`Deposit successful!\n${token1Amount} ${pool.tokens[0]} + ${token2Amount} ${pool.tokens[1]}`);
-    setToken1Amount('');
-    setToken2Amount('');
+    // Example fee calculation (replace with real logic if needed)
+    const fee = (parseFloat(token1Amount) + parseFloat(token2Amount)) * 0.003; // 0.3% fee
+    const platformFee = (parseFloat(token1Amount) + parseFloat(token2Amount)) * 0.001; // 0.1% platform fee
+    setPendingDeposit({
+      token1: pool.tokens[0],
+      token2: pool.tokens[1],
+      amount1: token1Amount,
+      amount2: token2Amount,
+      fee,
+      platformFee,
+    });
+    setShowConfirmModal(true);
   };
 
-  const handleWithdraw = () => {
-    if (!amount) {
+  const confirmDeposit = () => {
+    if (pendingDeposit) {
+      setCreatedPools([...createdPools, pendingDeposit]);
+      setShowConfirmModal(false);
+      setToken1Amount('');
+      setToken2Amount('');
+      alert(`Deposit successful!\n${pendingDeposit.amount1} ${pendingDeposit.token1} + ${pendingDeposit.amount2} ${pendingDeposit.token2}`);
+      setPendingDeposit(null);
+    }
+  };
+
+  const handleWithdraw = (index: number, withdrawAmount: string) => {
+    if (!withdrawAmount) {
       alert('Please enter withdrawal amount');
       return;
     }
-    alert(`Withdrawal successful!\n${amount} LP Token withdrawn`);
-    setAmount('');
+    alert(`Withdrawal successful!\n${withdrawAmount} LP Token withdrawn`);
+    // Remove pool from active pools after withdrawal
+    setCreatedPools(createdPools.filter((_, i) => i !== index));
   };
 
   return (
@@ -180,6 +204,70 @@ export default function PoolDetail({
         currentPage="pools"
       />
 
+      {/* Confirmation Modal */}
+      {showConfirmModal && pendingDeposit && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+        }}>
+          <div style={{
+            background: '#1a1a2e',
+            borderRadius: '16px',
+            padding: '32px',
+            minWidth: '320px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            color: '#fff',
+            textAlign: 'center',
+          }}>
+            <h2 style={{ marginBottom: '16px', fontSize: '22px', fontWeight: 700 }}>Confirm Deposit</h2>
+            <div style={{ marginBottom: '16px', fontSize: '16px' }}>
+              You are about to deposit:
+              <br />
+              <strong>{pendingDeposit.amount1} {pendingDeposit.token1}</strong> + <strong>{pendingDeposit.amount2} {pendingDeposit.token2}</strong>
+            </div>
+            <div style={{ marginBottom: '16px', fontSize: '15px', color: '#FFB366' }}>
+              <div>Fee: <strong>${pendingDeposit.fee.toFixed(4)}</strong></div>
+              <div>Platform Fee: <strong>${pendingDeposit.platformFee.toFixed(4)}</strong></div>
+            </div>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '24px' }}>
+              <button
+                onClick={confirmDeposit}
+                style={{
+                  background: '#00E676',
+                  color: '#1a1a2e',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >Confirm</button>
+              <button
+                onClick={() => { setShowConfirmModal(false); setPendingDeposit(null); }}
+                style={{
+                  background: '#FF5252',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
