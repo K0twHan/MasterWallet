@@ -12,6 +12,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { signInWithGoogle } from "../services/firebaseAuth";
+import Onboarding from "./Onboarding";
 
 interface WalletAddresses {
   ethereum: string;
@@ -22,11 +23,13 @@ interface WalletAddresses {
 interface CreateWalletProps {
   onBack: () => void;
   onWalletCreated: (addresses: WalletAddresses, seedPhrase: string) => void;
+  selectedChain: "ethereum" | "solana";
 }
 
 export default function CreateWallet({
   onBack,
   onWalletCreated,
+  selectedChain,
 }: CreateWalletProps) {
   const [mnemonic, setMnemonic] = useState<string>("");
   const [addresses, setAddresses] = useState<WalletAddresses>({
@@ -38,7 +41,11 @@ export default function CreateWallet({
   const [showSeedWarning, setShowSeedWarning] = useState(false);
   const [seedRevealed, setSeedRevealed] = useState(false);
   const [hasConfirmedWarning, setHasConfirmedWarning] = useState(false);
-  const [googleUser, setGoogleUser] = useState<{ email: string; name: string } | null>(null);
+  const [googleUser, setGoogleUser] = useState<{
+    email: string;
+    name: string;
+  } | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const createWallet = async () => {
     setIsCreating(true);
@@ -114,29 +121,29 @@ export default function CreateWallet({
     try {
       // Sign in with Google
       const user = await signInWithGoogle();
-      
+
       if (!user || !user.email) {
-        throw new Error('Failed to get user information from Google');
+        throw new Error("Failed to get user information from Google");
       }
 
       // Store seed with Google user ID for future retrieval
       // NOTE: In production, encrypt and store on secure backend!
       const storageKey = `wdk-wallet-${user.uid}`;
       let userSeed = localStorage.getItem(storageKey);
-      
+
       const isExistingUser = !!userSeed;
-      
+
       if (!userSeed) {
         // First time user - create new wallet
         userSeed = WDK.getRandomSeedPhrase();
         localStorage.setItem(storageKey, userSeed);
-        console.log('🆕 New wallet created for Google user');
+        console.log("🆕 New wallet created for Google user");
       } else {
-        console.log('🔄 Existing wallet loaded for Google user');
+        console.log("🔄 Existing wallet loaded for Google user");
       }
-      
+
       setMnemonic(userSeed);
-      
+
       const wdk = new WDK(userSeed);
 
       // Register Ethereum wallet
@@ -166,9 +173,9 @@ export default function CreateWallet({
       const btcHash = userSeed.split(" ").reduce((hash, word) => {
         return hash + word.charCodeAt(0);
       }, 0);
-      newAddresses.bitcoin = `bc1q${btcHash.toString(36)}${userSeed.split(" ")[0]}${
-        userSeed.split(" ")[1]
-      }`
+      newAddresses.bitcoin = `bc1q${btcHash.toString(36)}${
+        userSeed.split(" ")[0]
+      }${userSeed.split(" ")[1]}`
         .toLowerCase()
         .slice(0, 42);
 
@@ -187,25 +194,28 @@ export default function CreateWallet({
       }
 
       setAddresses(newAddresses);
-      
+
       // If existing user, directly go to dashboard
       if (isExistingUser) {
-        console.log('✅ Existing user redirected to dashboard:', user.email);
+        console.log("✅ Existing user redirected to dashboard:", user.email);
         onWalletCreated(newAddresses, userSeed);
         return;
       }
-      
+
       // New user - show seed phrase warning
       setGoogleUser({
         email: user.email,
-        name: user.displayName || 'User'
+        name: user.displayName || "User",
       });
       setShowSeedWarning(true);
-      
-      console.log('✅ New wallet created with Google account:', user.email);
+
+      console.log("✅ New wallet created with Google account:", user.email);
     } catch (error: any) {
       console.error("Google wallet creation error:", error);
-      alert(error.message || "Failed to create wallet with Google. Please try again.");
+      alert(
+        error.message ||
+          "Failed to create wallet with Google. Please try again."
+      );
     } finally {
       setIsCreating(false);
     }
@@ -222,8 +232,25 @@ export default function CreateWallet({
   };
 
   const handleFinish = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleOnboardingComplete = () => {
     onWalletCreated(addresses, mnemonic);
   };
+
+  // Show Onboarding screen after wallet creation
+  if (showOnboarding) {
+    return (
+      <Onboarding
+        walletAddress={
+          selectedChain === "ethereum" ? addresses.ethereum : addresses.solana
+        }
+        selectedChain={selectedChain}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
 
   return (
     <div
@@ -369,15 +396,17 @@ export default function CreateWallet({
               )}
             </button>
 
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '16px',
-              margin: '24px 0'
-            }}>
-              <div style={{ flex: 1, height: '1px', background: '#333' }}></div>
-              <span style={{ color: '#666', fontSize: '14px' }}>OR</span>
-              <div style={{ flex: 1, height: '1px', background: '#333' }}></div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "16px",
+                margin: "24px 0",
+              }}
+            >
+              <div style={{ flex: 1, height: "1px", background: "#333" }}></div>
+              <span style={{ color: "#666", fontSize: "14px" }}>OR</span>
+              <div style={{ flex: 1, height: "1px", background: "#333" }}></div>
             </div>
 
             <button
@@ -406,13 +435,15 @@ export default function CreateWallet({
               onMouseOver={(e) => {
                 if (!isCreating) {
                   e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.2)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 24px rgba(0, 0, 0, 0.2)";
                 }
               }}
               onMouseOut={(e) => {
                 if (!isCreating) {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(0, 0, 0, 0.15)";
                 }
               }}
             >
@@ -433,10 +464,22 @@ export default function CreateWallet({
               ) : (
                 <>
                   <svg width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
                   </svg>
                   Continue with Google
                 </>
@@ -501,12 +544,17 @@ export default function CreateWallet({
               <p style={{ color: "#999", fontSize: "14px" }}>
                 {googleUser ? (
                   <>
-                    Welcome, <strong style={{ color: '#00E676' }}>{googleUser.name}</strong>
+                    Welcome,{" "}
+                    <strong style={{ color: "#00E676" }}>
+                      {googleUser.name}
+                    </strong>
                     <br />
-                    <span style={{ fontSize: '12px', color: '#666' }}>{googleUser.email}</span>
+                    <span style={{ fontSize: "12px", color: "#666" }}>
+                      {googleUser.email}
+                    </span>
                   </>
                 ) : (
-                  'Your secure multi-chain wallet is ready'
+                  "Your secure multi-chain wallet is ready"
                 )}
               </p>
             </div>
@@ -909,7 +957,7 @@ export default function CreateWallet({
               onMouseOut={(e) => (e.currentTarget.style.background = "#00C853")}
             >
               <CheckCircle size={18} />
-              Done - Go to Homepage
+              Continue to Get Started
             </button>
 
             <button

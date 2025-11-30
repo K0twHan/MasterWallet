@@ -308,7 +308,8 @@ export default function Swap({
           error.message?.includes("rate") ||
           error.message?.includes("price")
         ) {
-          errorMessage = "⚠️ Could not fetch price information. Please try again.";
+          errorMessage =
+            "⚠️ Could not fetch price information. Please try again.";
         } else if (network === "sepolia") {
           errorMessage =
             "⚠️ DEX liquidity is very limited on Sepolia testnet. Use Mainnet for real swaps.";
@@ -369,7 +370,9 @@ export default function Swap({
           "This is a simulation. No real blockchain transaction will be made!\n\n" +
           `📤 Selling: ${fromAmount} ${fromToken}\n` +
           `📥 Receiving: ${toAmount} ${toToken}\n` +
-          `💰 Simulated Fee: ${(Number(swapQuote.fee) / 1e18).toFixed(6)} ETH\n\n` +
+          `💰 Simulated Fee: ${(Number(swapQuote.fee) / 1e18).toFixed(
+            6
+          )} ETH\n\n` +
           "Ideal for hackathon demos.\n\n" +
           "Do you want to continue?"
       );
@@ -396,7 +399,9 @@ export default function Swap({
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
             `📤 Sold: ${fromAmount} ${fromToken}\n` +
             `📥 Received: ${toAmount} ${toToken}\n` +
-            `💰 Simulated Network Fee: ${(Number(swapQuote.fee) / 1e18).toFixed(6)} ETH\n\n` +
+            `💰 Simulated Network Fee: ${(Number(swapQuote.fee) / 1e18).toFixed(
+              6
+            )} ETH\n\n` +
             `📋 Hackathon notes:\n` +
             `• Turn off Demo Mode for real swap\n` +
             `• Real WETH required on Mainnet\n` +
@@ -538,7 +543,7 @@ export default function Swap({
 
       // Create swap protocol instance
       const swapProtocol = new veloraProtocolEvm(account, {
-        swapMaxFee: 500000000000000n, // 0.0005 ETH max fee
+        swapMaxFee: 5000000000000000n, // 0.0005 ETH max fee
       });
 
       // Convert amount to correct decimals based on input token
@@ -627,7 +632,8 @@ export default function Swap({
         } else {
           errorMessage += "🔴 MAINNET ISSUE:\n\n";
           if (fromToken === "WETH") {
-            errorMessage += "❌ You do not have WETH or your balance is insufficient!\n\n";
+            errorMessage +=
+              "❌ You do not have WETH or your balance is insufficient!\n\n";
             errorMessage += "💡 SOLUTIONS:\n";
             errorMessage += "1️⃣ Convert your ETH to WETH:\n";
             errorMessage += "   • Go to https://app.uniswap.org\n";
@@ -656,8 +662,7 @@ export default function Swap({
           errorMessage += "🧪 TESTNET LIMITATION:\n";
           errorMessage += "Velora DEX has limited liquidity on Sepolia.\n\n";
           errorMessage += "💡 SOLUTIONS:\n";
-          errorMessage +=
-            "1️⃣ Get test tokens from Pimlico/Candide faucet\n";
+          errorMessage += "1️⃣ Get test tokens from Pimlico/Candide faucet\n";
           errorMessage += "2️⃣ Try a different token pair (e.g. WETH → USDT)\n";
           errorMessage += "3️⃣ Switch to Mainnet for real swaps (Settings ⚙️)";
         } else {
@@ -669,17 +674,15 @@ export default function Swap({
         error.message?.includes("max fee") ||
         error.message?.includes("fee")
       ) {
-        errorMessage +=
-          "💸 Swap fee is above the maximum allowed.\n\n";
-        errorMessage +=
-          "💡 Transaction costs are too high. Try again later.";
+        errorMessage += "💸 Swap fee is above the maximum allowed.\n\n";
+        errorMessage += "💡 Transaction costs are too high. Try again later.";
       } else if (
         error.message?.includes("insufficient") ||
         error.message?.includes("balance")
       ) {
-        errorMessage += "💰 Insufficient balance to complete the transaction.\n\n";
         errorMessage +=
-          "💡 Enter a lower amount or fund your wallet.";
+          "💰 Insufficient balance to complete the transaction.\n\n";
+        errorMessage += "💡 Enter a lower amount or fund your wallet.";
       } else if (
         error.message?.includes("user rejected") ||
         error.message?.includes("denied")
@@ -1082,7 +1085,7 @@ export default function Swap({
                     appearance: "none",
                   }}
                   // Remove spinner arrows in Chrome, Safari, Edge
-                  onWheel={e => (e.target as HTMLInputElement).blur()}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 />
                 <div
                   style={{
@@ -1163,7 +1166,9 @@ export default function Swap({
                   padding: "0 4px",
                 }}
               >
-                <span>Balance: {balance} {fromToken}</span>
+                <span>
+                  Balance: {balance} {fromToken}
+                </span>
                 <span
                   style={{
                     color: "#FF6B00",
@@ -1254,7 +1259,7 @@ export default function Swap({
                     appearance: "none",
                   }}
                   // Remove spinner arrows in Chrome, Safari, Edge
-                  onWheel={e => (e.target as HTMLInputElement).blur()}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 />
                 {isLoadingQuote && (
                   <div
@@ -1445,7 +1450,8 @@ export default function Swap({
                       margin: "8px 0 0 0",
                     }}
                   >
-                    💡 Tip: It is recommended to use Mainnet for swaps. Liquidity is very limited on Testnet DEXes.
+                    💡 Tip: It is recommended to use Mainnet for swaps.
+                    Liquidity is very limited on Testnet DEXes.
                   </p>
                 )}
               </div>

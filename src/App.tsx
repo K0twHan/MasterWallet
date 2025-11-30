@@ -120,6 +120,9 @@ function App() {
         <CreateWallet
           onBack={() => setCurrentPage("landing")}
           onWalletCreated={handleWalletCreated}
+          selectedChain={
+            selectedChain === "bitcoin" ? "ethereum" : selectedChain
+          }
         />
       )}
 
@@ -271,7 +274,8 @@ function App() {
           onNavigateToDashboard={() => setCurrentPage("dashboard")}
           onNavigateToBridge={() => setCurrentPage("bridge")}
           onNavigateToPools={() => setCurrentPage("pools")}
-          onNavigateToSend={() => setCurrentPage("send")} balance={""}        />
+          onNavigateToSend={() => setCurrentPage("send")}
+        />
       )}
 
       {/* AI Chatbot - Available on all pages except landing */}

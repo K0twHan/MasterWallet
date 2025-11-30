@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navbar from "./Navbar";
 import {
   TrendingUp,
@@ -38,17 +38,7 @@ interface PoolsProps {
 
 type RiskLevel = "safe" | "moderate" | "risky";
 
-interface Pool {
-  id: string;
-  name: string;
-  protocol: string;
-  apy: string;
-  tvl: string;
-  risk: RiskLevel;
-  tokens: string[];
-  description: string;
-  network: string;
-}
+// Pool interface removed - API returns dynamic pool data structure
 
 const riskConfig = {
   safe: {
@@ -94,21 +84,16 @@ export default function Pools({
   const [selectedRisk, setSelectedRisk] = useState<RiskLevel | "all">("all");
   const [sortBy, setSortBy] = useState<"apy" | "tvl">("apy");
   const [pools, setPools] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
 
   // Fetch pools from API
   React.useEffect(() => {
-    setLoading(true);
     fetch("http://10.0.77.251:8000/gecko/pool/usdt")
       .then((res) => res.json())
       .then((data) => {
         setPools(data.data || []);
-        setLoading(false);
       })
-      .catch((err) => {
-        setError("Failed to fetch pools");
-        setLoading(false);
+      .catch(() => {
+        // Error handling - silently fail for now
       });
   }, []);
 
@@ -449,8 +434,7 @@ export default function Pools({
                   {pool.tokens
                     .filter(
                       (token: any) =>
-                        typeof token === "string" ||
-                        typeof token === "number"
+                        typeof token === "string" || typeof token === "number"
                     )
                     .map((token: string | number) => (
                       <div
